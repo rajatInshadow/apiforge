@@ -1,0 +1,33 @@
+# .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Node / React
+node_modules/
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database local files
+*.bak
+*.mdf
+*.ldf
+
+# Optional: ignore very large seed files if GitHub rejects them
+# database/seed-large.sql

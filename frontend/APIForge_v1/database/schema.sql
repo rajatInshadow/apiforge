@@ -1,0 +1,120 @@
+IF DB_ID('APIForgeDb') IS NULL
+BEGIN
+    CREATE DATABASE APIForgeDb;
+END
+GO
+
+USE APIForgeDb;
+GO
+
+IF OBJECT_ID('GatewayRequestLogs', 'U') IS NOT NULL DROP TABLE GatewayRequestLogs;
+IF OBJECT_ID('ApiUsageDailyStats', 'U') IS NOT NULL DROP TABLE ApiUsageDailyStats;
+IF OBJECT_ID('ApiKeys', 'U') IS NOT NULL DROP TABLE ApiKeys;
+IF OBJECT_ID('RegisteredApis', 'U') IS NOT NULL DROP TABLE RegisteredApis;
+IF OBJECT_ID('AuditLogs', 'U') IS NOT NULL DROP TABLE AuditLogs;
+IF OBJECT_ID('Orders', 'U') IS NOT NULL DROP TABLE Orders;
+IF OBJECT_ID('Customers', 'U') IS NOT NULL DROP TABLE Customers;
+IF OBJECT_ID('Products', 'U') IS NOT NULL DROP TABLE Products;
+IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
+GO
+
+CREATE TABLE Users (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Email NVARCHAR(256) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(512) NOT NULL,
+    FullName NVARCHAR(200) NOT NULL,
+    Role NVARCHAR(50) NOT NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+CREATE TABLE RegisteredApis (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(150) NOT NULL,
+    Description NVARCHAR(1000) NOT NULL,
+    RoutePrefix NVARCHAR(100) NOT NULL UNIQUE,
+    DownstreamBaseUrl NVARCHAR(500) NOT NULL,
+    Status NVARCHAR(50) NOT NULL DEFAULT 'Active',
+    CreatedByUserId INT NOT NULL,
+    CreatedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    UpdatedAtUtc DATETIME2 NULL,
+    CONSTRAINT FK_RegisteredApis_Users FOREIGN KEY (CreatedByUserId) REFERENCES Users(Id)
+);
+
+CREATE TABLE ApiKeys (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL,
+    RegisteredApiId INT NULL,
+    Name NVARCHAR(150) NOT NULL,
+    KeyPrefix NVARCHAR(20) NOT NULL,
+    KeyHash NVARCHAR(128) NOT NULL UNIQUE,
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    ExpiresAtUtc DATETIME2 NULL,
+    CONSTRAINT FK_ApiKeys_Users FOREIGN KEY (UserId) REFERENCES Users(Id),
+    CONSTRAINT FK_ApiKeys_RegisteredApis FOREIGN KEY (RegisteredApiId) REFERENCES RegisteredApis(Id)
+);
+
+CREATE TABLE GatewayRequestLogs (
+    Id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    RegisteredApiId INT NULL,
+    ApiKeyId INT NULL,
+    UserId INT NULL,
+    HttpMethod NVARCHAR(20) NOT NULL,
+    RequestPath NVARCHAR(1000) NOT NULL,
+    StatusCode INT NOT NULL,
+    ResponseTimeMs BIGINT NOT NULL,
+    ClientIp NVARCHAR(100) NULL,
+    ErrorMessage NVARCHAR(2000) NULL,
+    CreatedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_GatewayRequestLogs_RegisteredApis FOREIGN KEY (RegisteredApiId) REFERENCES RegisteredApis(Id),
+    CONSTRAINT FK_GatewayRequestLogs_ApiKeys FOREIGN KEY (ApiKeyId) REFERENCES ApiKeys(Id),
+    CONSTRAINT FK_GatewayRequestLogs_Users FOREIGN KEY (UserId) REFERENCES Users(Id)
+);
+
+CREATE TABLE ApiUsageDailyStats (
+    Id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    RegisteredApiId INT NOT NULL,
+    UsageDate DATE NOT NULL,
+    TotalRequests BIGINT NOT NULL,
+    FailedRequests BIGINT NOT NULL,
+    AverageResponseTimeMs FLOAT NOT NULL,
+    CONSTRAINT FK_ApiUsageDailyStats_RegisteredApis FOREIGN KEY (RegisteredApiId) REFERENCES RegisteredApis(Id)
+);
+
+CREATE TABLE AuditLogs (
+    Id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NULL,
+    Action NVARCHAR(100) NOT NULL,
+    EntityName NVARCHAR(100) NOT NULL,
+    EntityId NVARCHAR(100) NULL,
+    Details NVARCHAR(MAX) NULL,
+    CreatedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+CREATE TABLE Products (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Sku NVARCHAR(50) NOT NULL UNIQUE,
+    Name NVARCHAR(200) NOT NULL,
+    Price DECIMAL(18,2) NOT NULL,
+    StockQuantity INT NOT NULL,
+    CreatedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+CREATE TABLE Customers (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    FullName NVARCHAR(200) NOT NULL,
+    Email NVARCHAR(256) NOT NULL,
+    CreatedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+CREATE TABLE Orders (
+    Id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    OrderNumber NVARCHAR(50) NOT NULL UNIQUE,
+    CustomerId INT NOT NULL,
+    TotalAmount DECIMAL(18,2) NOT NULL,
+    Status NVARCHAR(50) NOT NULL,
+    CreatedAtUtc DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_Orders_Customers FOREIGN KEY (CustomerId) REFERENCES Customers(Id)
+);
+GO

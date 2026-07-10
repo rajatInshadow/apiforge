@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "APIForge.Gateway": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:50868;http://localhost:50871"
+    }
+  }
+}
