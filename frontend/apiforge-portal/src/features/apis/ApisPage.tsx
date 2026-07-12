@@ -8,7 +8,7 @@ export function ApisPage() {
   const [apis, setApis] = useState<RegisteredApi[]>([]);
   const [name, setName] = useState('Inventory API');
   const [routePrefix, setRoutePrefix] = useState('inventory');
-  const [downstreamBaseUrl, setDownstreamBaseUrl] = useState('https://localhost:7501');
+  const [downstreamBaseUrl, setDownstreamBaseUrl] = useState('https://localhost:50865');
   const [description, setDescription] = useState('New downstream API');
 
   async function load() {
