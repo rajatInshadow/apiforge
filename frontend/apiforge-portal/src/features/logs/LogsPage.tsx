@@ -3,11 +3,11 @@ import { http } from "../../services/http";
 import { PagedResponse, RequestLog } from "../../types/api";
 import Filter from "../../components/filter/filter";
 import { RequestLogType } from "../../types/filter";
-import { getApiNameFromPath } from "../../utils/stringUtils";
 
 export function LogsPage() {
   const [data, setData] = useState<PagedResponse<RequestLog> | null>(null);
   const [page, setPage] = useState(1);
+  const params = new URLSearchParams();
 
   const [api, setApi] = useState<RequestLogType>({
     statusCode: 0,
@@ -18,24 +18,40 @@ export function LogsPage() {
   });
 
   const updateFilter = (data: RequestLogType) => {
+    setPage(1);
     setApi(data);
   };
 
   useEffect(() => {
+    params.set("page", page.toString());
+    params.set("pageSize", "25");
+
+    if (api.requestType) {
+      params.set("httpMethod", api.requestType);
+    }
+
+    if (api.statusCode) {
+      params.set("statusCode", api.statusCode.toString());
+    }
+
+    if(api.api) {
+      params.set("apiId", api.api.toString());
+    }
+
+    if (api.fromDate) {
+      params.set("fromDate", api.fromDate);
+    }
+
+    if (api.toDate) {
+      params.set("toDate", api.toDate);
+    }
+    console.log(params.toString())
     http
-      .get<
-        PagedResponse<RequestLog>
-      >(`/api/request-logs?page=${page}&pageSize=25&apiId=${api.api}&httpMethod=${api.requestType}&fromDate=${api.fromDate}&endDate=${api.toDate}`)
+      .get<PagedResponse<RequestLog>>(`/api/request-logs?${params.toString()}`)
       .then((res) => {
         setData(res.data);
-        console.log("api response ", res);
       });
-  }, [page,api]);
-
-  useEffect(() => {
-    console.log("api", api);
-    console.log("data ", data);
-  }, [api]);
+  }, [page, api]);
 
   return (
     <div>
@@ -53,50 +69,50 @@ export function LogsPage() {
             </tr>
           </thead>
           <tbody>
-            {data?.items
-              .filter((x) => {
-                const apiStatusCode =
-                  api.statusCode === 0 || x.statusCode === api.statusCode;
-                const apiRequestType =
-                  api.requestType === "" || x.httpMethod === api.requestType;
-                const apiApi =
-                  api.api === 0 ||
-                x.registeredApiId === api.api;
-                console.log("api api api ",api, " ",api.statusCode === 0 || x.statusCode === api.statusCode)
+            {data?.totalCount == 0 ? (
+              <h1>No data is found</h1>
+            ) : (
+              // data?.items
+              //   .filter((x) => {
+              //     const apiStatusCode =
+              //       api.statusCode === 0 || x.statusCode === api.statusCode;
+              //     const apiRequestType =
+              //       api.requestType === "" || x.httpMethod === api.requestType;
+              //     const apiApi = api.api === 0 || x.registeredApiId === api.api;
 
-                const logDate = new Date(x.createdAtUtc);
+              //     const logDate = new Date(x.createdAtUtc);
 
-                const fromDateMatch =
-                  api.fromDate === "" || logDate >= new Date(api.fromDate);
+              //     const fromDateMatch =
+              //       api.fromDate === "" || logDate >= new Date(api.fromDate);
 
-                const toDateEnd = api.toDate ? new Date(api.toDate) : null;
+              //     const toDateEnd = api.toDate ? new Date(api.toDate) : null;
 
-                if (toDateEnd) {
-                  toDateEnd.setHours(23, 59, 59, 999);
-                }
+              //     if (toDateEnd) {
+              //       toDateEnd.setHours(23, 59, 59, 999);
+              //     }
 
-                const toDateMatch = !toDateEnd || logDate <= toDateEnd;
+              //     const toDateMatch = !toDateEnd || logDate <= toDateEnd;
 
-                return (
-                  apiStatusCode &&
-                  apiRequestType &&
-                  apiApi &&
-                  fromDateMatch &&
-                  toDateMatch
-                );
-              })
-              .map((log) => (
-                
-                <tr key={log.id}>
-                  <td>{new Date(log.createdAtUtc).toLocaleString()}</td>
-                  <td>{log.httpMethod}</td>
-                  <td>{log.requestPath}</td>
+              //     return (
+              //       apiStatusCode &&
+              //       apiRequestType &&
+              //       apiApi &&
+              //       fromDateMatch &&
+              //       toDateMatch
+              //     );
+              //   })
+                data?.items.map((log) => (
+                  <tr key={log.id}>
+                    <td>{new Date(log.createdAtUtc).toLocaleString()}</td>
+                    <td>{log.httpMethod}</td>
+                    <td>{log.requestPath}</td>
 
-                  <td>{log.statusCode}</td>
+                    <td>{log.statusCode}</td>
 
-                  <td>{log.responseTimeMs}</td>
-                </tr>
-              ))}
+                    <td>{log.responseTimeMs}</td>
+                  </tr>
+                ))
+            )}
           </tbody>
         </table>
         <div className="pager">

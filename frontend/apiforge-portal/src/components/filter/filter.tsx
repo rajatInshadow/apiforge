@@ -1,28 +1,32 @@
-import { useState } from 'react'
-import Box from '@mui/material/Box'
-import FormControl from '@mui/material/FormControl'
-import InputLabel from '@mui/material/InputLabel'
-import MenuItem from '@mui/material/MenuItem'
-import Paper from '@mui/material/Paper'
-import Select from '@mui/material/Select'
-import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
-import type { SelectChangeEvent } from '@mui/material/Select'
-import { RequestLogType } from '../../types/filter'
+import { useEffect, useState } from "react";
+import Box from "@mui/material/Box";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
+import Select from "@mui/material/Select";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import type { SelectChangeEvent } from "@mui/material/Select";
+import { RequestLogType } from "../../types/filter";
+import Button from "@mui/material/Button";
+import { RegisteredApi } from "../../types/api";
+import { http } from "../../services/http";
 type ChildProps = {
-  addFilter: (data: RequestLogType) => void
-}
+  addFilter: (data: RequestLogType) => void;
+};
 
 const initialFilters: RequestLogType = {
   statusCode: 0,
-  requestType: '',
+  requestType: "",
   api: 0,
-  fromDate: '',
-  toDate: '',
-}
+  fromDate: "",
+  toDate: "",
+};
 
 export default function Filter({ addFilter }: ChildProps) {
-  const [filters, setFilters] = useState<RequestLogType>(initialFilters)
+  const [filters, setFilters] = useState<RequestLogType>(initialFilters);
+  const [apis, setApis] = useState<RegisteredApi[]>();
 
   function updateFilter<Key extends keyof RequestLogType>(
     name: Key,
@@ -31,36 +35,56 @@ export default function Filter({ addFilter }: ChildProps) {
     const updatedFilters = {
       ...filters,
       [name]: value,
-    }
+    };
 
-    setFilters(updatedFilters)
-    addFilter(updatedFilters)
+    setFilters(updatedFilters);
+    addFilter(updatedFilters);
   }
 
+  const getApis = () => {
+    console.log("api calling");
+    http.get<RegisteredApi[]>(`/api/apis`).then((res) => {
+      setApis(res.data);
+      console.log("api called");
+      console.log(apis);
+    });
+  };
+
   function handleStatusCodeChange(event: SelectChangeEvent<number>) {
-    updateFilter('statusCode', Number(event.target.value))
+    updateFilter("statusCode", Number(event.target.value));
   }
 
   function handleApiChange(event: SelectChangeEvent<number>) {
-    updateFilter('api', Number(event.target.value))
+    console.log(event.target.value)
+    updateFilter("api", Number(event.target.value));
   }
 
   function handleRequestTypeChange(event: SelectChangeEvent) {
-    updateFilter('requestType', event.target.value)
+    updateFilter("requestType", event.target.value);
   }
+
+  function resetFilter() {
+    setFilters(initialFilters);
+    addFilter(initialFilters);
+  }
+
+  useEffect(() => {
+    console.log("calling");
+    getApis();
+  }, []);
 
   return (
     <Paper
       component="section"
       elevation={0}
       sx={{
-        width: '100%',
-        mx: 'auto',
+        width: "100%",
+        mx: "auto",
         p: { xs: 3, sm: 4 },
         border: 1,
-        borderColor: 'divider',
+        borderColor: "divider",
         borderRadius: 3,
-        marginBottom: '40px'
+        marginBottom: "40px",
       }}
     >
       <Typography component="h1" variant="h4" sx={{ mb: 1, fontWeight: 700 }}>
@@ -75,11 +99,11 @@ export default function Filter({ addFilter }: ChildProps) {
         aria-label="Request filters"
         onSubmit={(event) => event.preventDefault()}
         sx={{
-          display: 'grid',
+          display: "grid",
           gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, minmax(0, 1fr))',
-            md: 'repeat(3, minmax(0, 1fr))',
+            xs: "1fr",
+            sm: "repeat(2, minmax(0, 1fr))",
+            md: "repeat(3, minmax(0, 1fr))",
           },
           gap: 2,
         }}
@@ -103,6 +127,7 @@ export default function Filter({ addFilter }: ChildProps) {
 
         <FormControl fullWidth>
           <InputLabel id="api-label">API</InputLabel>
+
           <Select<number>
             labelId="api-label"
             id="api"
@@ -112,8 +137,9 @@ export default function Filter({ addFilter }: ChildProps) {
             onChange={handleApiChange}
           >
             <MenuItem value={0}>All</MenuItem>
-            <MenuItem value={1}>Product</MenuItem>
-            <MenuItem value={2}>Order</MenuItem>
+            {apis?.map((item) => (
+              <MenuItem value={item.id}>{item.name}</MenuItem>
+            ))}
           </Select>
         </FormControl>
 
@@ -127,7 +153,7 @@ export default function Filter({ addFilter }: ChildProps) {
             label="HTTP Method"
             onChange={handleRequestTypeChange}
           >
-            <MenuItem value="">All</MenuItem>
+            <MenuItem>All</MenuItem>
             <MenuItem value="GET">GET</MenuItem>
             <MenuItem value="POST">POST</MenuItem>
             <MenuItem value="PUT">PUT</MenuItem>
@@ -142,7 +168,7 @@ export default function Filter({ addFilter }: ChildProps) {
           label="From Date"
           type="date"
           value={filters.fromDate}
-          onChange={(event) => updateFilter('fromDate', event.target.value)}
+          onChange={(event) => updateFilter("fromDate", event.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
         />
 
@@ -153,10 +179,13 @@ export default function Filter({ addFilter }: ChildProps) {
           label="To Date"
           type="date"
           value={filters.toDate}
-          onChange={(event) => updateFilter('toDate', event.target.value)}
+          onChange={(event) => updateFilter("toDate", event.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
         />
+        <Button variant="outlined" onClick={() => resetFilter()}>
+          CLear filter
+        </Button>
       </Box>
     </Paper>
-  )
+  );
 }
