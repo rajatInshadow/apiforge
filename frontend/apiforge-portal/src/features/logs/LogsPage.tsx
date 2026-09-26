@@ -69,7 +69,9 @@ export function LogsPage() {
           </thead>
           <tbody>
             {data?.totalCount == 0 ? (
-              <h1>No data is found</h1>
+              <td colSpan={5} style={{ textAlign: "center" }}>
+                No matching records found
+              </td>
             ) : (
               data?.items.map((log) => (
                 <tr key={log.id}>
