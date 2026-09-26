@@ -1,94 +1,162 @@
-import { useState } from "react";
-import { RequestLogType } from "../../types/filter";
-
+import { useState } from 'react'
+import Box from '@mui/material/Box'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import MenuItem from '@mui/material/MenuItem'
+import Paper from '@mui/material/Paper'
+import Select from '@mui/material/Select'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
+import type { SelectChangeEvent } from '@mui/material/Select'
+import { RequestLogType } from '../../types/filter'
 type ChildProps = {
-  addFilter: (data: RequestLogType) => void;
-};
+  addFilter: (data: RequestLogType) => void
+}
 
-const Filter = ({ addFilter }: ChildProps) => {
-  const [filters, setFilters] = useState<RequestLogType>({
-    statusCode: 0,
-    requestType: "",
-    api: "",
-    fromDate: "",
-    toDate: ""
-  });
+const initialFilters: RequestLogType = {
+  statusCode: 0,
+  requestType: '',
+  api: 0,
+  fromDate: '',
+  toDate: '',
+}
 
-  function updateFilter<K extends keyof RequestLogType>(
-    name: K,
-    value: RequestLogType[K],
+export default function Filter({ addFilter }: ChildProps) {
+  const [filters, setFilters] = useState<RequestLogType>(initialFilters)
+
+  function updateFilter<Key extends keyof RequestLogType>(
+    name: Key,
+    value: RequestLogType[Key],
   ) {
     const updatedFilters = {
       ...filters,
       [name]: value,
-    };
+    }
 
-    console.log("upppp ",updatedFilters)
+    setFilters(updatedFilters)
+    addFilter(updatedFilters)
+  }
 
-    setFilters(updatedFilters);
-    addFilter(updatedFilters);
+  function handleStatusCodeChange(event: SelectChangeEvent<number>) {
+    updateFilter('statusCode', Number(event.target.value))
+  }
+
+  function handleApiChange(event: SelectChangeEvent<number>) {
+    updateFilter('api', Number(event.target.value))
+  }
+
+  function handleRequestTypeChange(event: SelectChangeEvent) {
+    updateFilter('requestType', event.target.value)
   }
 
   return (
-    <>
-      <h1>Filter component</h1>
+    <Paper
+      component="section"
+      elevation={0}
+      sx={{
+        width: '100%',
+        mx: 'auto',
+        p: { xs: 3, sm: 4 },
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 3,
+        marginBottom: '40px'
+      }}
+    >
+      <Typography component="h1" variant="h4" sx={{ mb: 1, fontWeight: 700 }}>
+        Filter component
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Narrow down requests by status, API, method, or date range.
+      </Typography>
 
-      <label htmlFor="statusCode">Status Code</label>
-      <select
-        name="statusCode"
-        id="statusCode"
-        value={filters.statusCode}
-        onChange={(e) => updateFilter("statusCode", Number(e.target.value))}
+      <Box
+        component="form"
+        aria-label="Request filters"
+        onSubmit={(event) => event.preventDefault()}
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, minmax(0, 1fr))',
+            md: 'repeat(3, minmax(0, 1fr))',
+          },
+          gap: 2,
+        }}
       >
-        <option value="0">All</option>
-        <option value="200">Success</option>
-        <option value="500">Internal Server Error</option>
-        <option value="404">Not Found</option>
-      </select>
+        <FormControl fullWidth>
+          <InputLabel id="status-code-label">Status Code</InputLabel>
+          <Select<number>
+            labelId="status-code-label"
+            id="statusCode"
+            name="statusCode"
+            value={filters.statusCode}
+            label="Status Code"
+            onChange={handleStatusCodeChange}
+          >
+            <MenuItem value={0}>All</MenuItem>
+            <MenuItem value={200}>Success</MenuItem>
+            <MenuItem value={500}>Internal Server Error</MenuItem>
+            <MenuItem value={404}>Not Found</MenuItem>
+          </Select>
+        </FormControl>
 
-      <label htmlFor="Api">API</label>
-      <select
-        name="Api"
-        id="Api"
-        value={filters.api}
-        onChange={(e) => updateFilter("api", e.target.value)}
-      >
-        <option value="">All</option>
-        <option value="products">Product</option>
-        <option value="orders">Order</option>
-      </select>
+        <FormControl fullWidth>
+          <InputLabel id="api-label">API</InputLabel>
+          <Select<number>
+            labelId="api-label"
+            id="api"
+            name="api"
+            value={filters.api}
+            label="API"
+            onChange={handleApiChange}
+          >
+            <MenuItem value={0}>All</MenuItem>
+            <MenuItem value={1}>Product</MenuItem>
+            <MenuItem value={2}>Order</MenuItem>
+          </Select>
+        </FormControl>
 
-      <label htmlFor="RequestType">Http Method</label>
-      <select
-        name="RequestType"
-        id="RequestType"
-        value={filters.requestType}
-        onChange={(e) => updateFilter("requestType", e.target.value)}
-      >
-        <option value="">All</option>
-        <option value="GET">GET</option>
-        <option value="POST">POST</option>
-        <option value="PUT">PUT</option>
-        <option value="DELETE">DELETE</option>
-      </select>
+        <FormControl fullWidth>
+          <InputLabel id="request-type-label">HTTP Method</InputLabel>
+          <Select
+            labelId="request-type-label"
+            id="requestType"
+            name="requestType"
+            value={filters.requestType}
+            label="HTTP Method"
+            onChange={handleRequestTypeChange}
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="GET">GET</MenuItem>
+            <MenuItem value="POST">POST</MenuItem>
+            <MenuItem value="PUT">PUT</MenuItem>
+            <MenuItem value="DELETE">DELETE</MenuItem>
+          </Select>
+        </FormControl>
 
-      <label htmlFor="fromDate">From Date</label>
-      <input
-        type="date"
-        id="fromDate"
-        value={filters.fromDate}
-        onChange={(e) => updateFilter("fromDate", e.target.value)}
-      />
+        <TextField
+          fullWidth
+          id="fromDate"
+          name="fromDate"
+          label="From Date"
+          type="date"
+          value={filters.fromDate}
+          onChange={(event) => updateFilter('fromDate', event.target.value)}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
 
-      <label htmlFor="toDate">To Date</label>
-      <input
-        type="date"
-        id="toDate"
-        value={filters.toDate}
-        onChange={(e) => updateFilter("toDate", e.target.value)}
-      />
-    </>
-  );
-};
-
-export default Filter;
+        <TextField
+          fullWidth
+          id="toDate"
+          name="toDate"
+          label="To Date"
+          type="date"
+          value={filters.toDate}
+          onChange={(event) => updateFilter('toDate', event.target.value)}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+      </Box>
+    </Paper>
+  )
+}

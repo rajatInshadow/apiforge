@@ -60,3 +60,9 @@ export type DashboardSummary = {
   topApis: Array<{ registeredApiId: number; apiName: string; requestCount: number; averageResponseTimeMs: number }>;
   recentFailures: Array<{ logId: number; requestPath: string; statusCode: number; errorMessage?: string | null; createdAtUtc: string }>;
 };
+
+
+export type RegisteredApiKey = {
+  "orders":2,
+  "products":1
+}

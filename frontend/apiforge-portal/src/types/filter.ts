@@ -1,5 +1,5 @@
 export type RequestLogType  = {
-    api: string;
+    api: number;
     statusCode : number;
     requestType : string;
     fromDate: string;

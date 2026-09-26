@@ -12,13 +12,12 @@ export function LogsPage() {
   const [api, setApi] = useState<RequestLogType>({
     statusCode: 0,
     requestType: "",
-    api: "",
+    api: 0,
     fromDate: "",
-    toDate: ""
+    toDate: "",
   });
 
   const updateFilter = (data: RequestLogType) => {
-    console.log("from update filter ", data);
     setApi(data);
   };
 
@@ -26,12 +25,12 @@ export function LogsPage() {
     http
       .get<
         PagedResponse<RequestLog>
-      >(`/api/request-logs?page=${page}&pageSize=25`)
+      >(`/api/request-logs?page=${page}&pageSize=25&apiId=${api.api}&httpMethod=${api.requestType}&fromDate=${api.fromDate}&endDate=${api.toDate}`)
       .then((res) => {
         setData(res.data);
-        console.log(res.data);
+        console.log("api response ", res);
       });
-  }, [page]);
+  }, [page,api]);
 
   useEffect(() => {
     console.log("api", api);
@@ -56,32 +55,21 @@ export function LogsPage() {
           <tbody>
             {data?.items
               .filter((x) => {
-                console.log("status code from html", x.statusCode);
-                console.log("fromapi html res data ", api);
                 const apiStatusCode =
                   api.statusCode === 0 || x.statusCode === api.statusCode;
                 const apiRequestType =
                   api.requestType === "" || x.httpMethod === api.requestType;
                 const apiApi =
-                  api.api === "" ||
-                  getApiNameFromPath(x.requestPath) === api.api;
-                console.log(
-                  x.apiName,
-                  "getApiNameFromPath ",
-                  getApiNameFromPath(x.requestPath),
-                );
-                console.log(
-                  "truth or falsy",
-                  apiStatusCode && apiRequestType && apiApi,
-                );
+                  api.api === 0 ||
+                x.registeredApiId === api.api;
+                console.log("api api api ",api, " ",api.statusCode === 0 || x.statusCode === api.statusCode)
+
                 const logDate = new Date(x.createdAtUtc);
 
                 const fromDateMatch =
                   api.fromDate === "" || logDate >= new Date(api.fromDate);
 
-                  
-                  const toDateEnd = api.toDate ? new Date(api.toDate) : null;
-                  console.log("logDate ",logDate, "from Date ",api.fromDate, "from Date match ", fromDateMatch,"toDate ", api.toDate," toEndDate ", toDateEnd )
+                const toDateEnd = api.toDate ? new Date(api.toDate) : null;
 
                 if (toDateEnd) {
                   toDateEnd.setHours(23, 59, 59, 999);
@@ -98,6 +86,7 @@ export function LogsPage() {
                 );
               })
               .map((log) => (
+                
                 <tr key={log.id}>
                   <td>{new Date(log.createdAtUtc).toLocaleString()}</td>
                   <td>{log.httpMethod}</td>
