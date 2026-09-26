@@ -34,7 +34,7 @@ export function LogsPage() {
       params.set("statusCode", api.statusCode.toString());
     }
 
-    if(api.api) {
+    if (api.api) {
       params.set("apiId", api.api.toString());
     }
 
@@ -43,9 +43,8 @@ export function LogsPage() {
     }
 
     if (api.toDate) {
-      params.set("toDate", api.toDate);
+      params.set("endDate", api.toDate);
     }
-    console.log(params.toString())
     http
       .get<PagedResponse<RequestLog>>(`/api/request-logs?${params.toString()}`)
       .then((res) => {
@@ -72,58 +71,34 @@ export function LogsPage() {
             {data?.totalCount == 0 ? (
               <h1>No data is found</h1>
             ) : (
-              // data?.items
-              //   .filter((x) => {
-              //     const apiStatusCode =
-              //       api.statusCode === 0 || x.statusCode === api.statusCode;
-              //     const apiRequestType =
-              //       api.requestType === "" || x.httpMethod === api.requestType;
-              //     const apiApi = api.api === 0 || x.registeredApiId === api.api;
+              data?.items.map((log) => (
+                <tr key={log.id}>
+                  <td>{new Date(log.createdAtUtc).toLocaleString()}</td>
+                  <td>{log.httpMethod}</td>
+                  <td>{log.requestPath}</td>
 
-              //     const logDate = new Date(x.createdAtUtc);
+                  <td>{log.statusCode}</td>
 
-              //     const fromDateMatch =
-              //       api.fromDate === "" || logDate >= new Date(api.fromDate);
-
-              //     const toDateEnd = api.toDate ? new Date(api.toDate) : null;
-
-              //     if (toDateEnd) {
-              //       toDateEnd.setHours(23, 59, 59, 999);
-              //     }
-
-              //     const toDateMatch = !toDateEnd || logDate <= toDateEnd;
-
-              //     return (
-              //       apiStatusCode &&
-              //       apiRequestType &&
-              //       apiApi &&
-              //       fromDateMatch &&
-              //       toDateMatch
-              //     );
-              //   })
-                data?.items.map((log) => (
-                  <tr key={log.id}>
-                    <td>{new Date(log.createdAtUtc).toLocaleString()}</td>
-                    <td>{log.httpMethod}</td>
-                    <td>{log.requestPath}</td>
-
-                    <td>{log.statusCode}</td>
-
-                    <td>{log.responseTimeMs}</td>
-                  </tr>
-                ))
+                  <td>{log.responseTimeMs}</td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
         <div className="pager">
           <button
+            disabled={page == 1}
             className="secondary"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => setPage((p) => p - 1)}
           >
             Previous
           </button>
           <span>Page {page}</span>
-          <button className="secondary" onClick={() => setPage((p) => p + 1)}>
+          <button
+            disabled={!data || page * data.pageSize >= data.totalCount}
+            className="secondary"
+            onClick={() => setPage((p) => p + 1)}
+          >
             Next
           </button>
         </div>

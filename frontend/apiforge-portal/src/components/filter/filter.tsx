@@ -41,21 +41,11 @@ export default function Filter({ addFilter }: ChildProps) {
     addFilter(updatedFilters);
   }
 
-  const getApis = () => {
-    console.log("api calling");
-    http.get<RegisteredApi[]>(`/api/apis`).then((res) => {
-      setApis(res.data);
-      console.log("api called");
-      console.log(apis);
-    });
-  };
-
   function handleStatusCodeChange(event: SelectChangeEvent<number>) {
     updateFilter("statusCode", Number(event.target.value));
   }
 
   function handleApiChange(event: SelectChangeEvent<number>) {
-    console.log(event.target.value)
     updateFilter("api", Number(event.target.value));
   }
 
@@ -69,8 +59,9 @@ export default function Filter({ addFilter }: ChildProps) {
   }
 
   useEffect(() => {
-    console.log("calling");
-    getApis();
+    http.get<RegisteredApi[]>(`/api/apis`).then((res) => {
+      setApis(res.data);
+    });
   }, []);
 
   return (
@@ -153,7 +144,7 @@ export default function Filter({ addFilter }: ChildProps) {
             label="HTTP Method"
             onChange={handleRequestTypeChange}
           >
-            <MenuItem>All</MenuItem>
+            <MenuItem value="">All</MenuItem>
             <MenuItem value="GET">GET</MenuItem>
             <MenuItem value="POST">POST</MenuItem>
             <MenuItem value="PUT">PUT</MenuItem>
